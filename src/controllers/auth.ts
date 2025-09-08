@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import z from "zod";
-import { createUser } from "../services/socio";
 import { createToken } from "../services/auth";
+import { createSocio } from "../services/admin";
 
 export const signup:RequestHandler = async (req, res) => {
     const schema = z.object({
@@ -19,7 +19,7 @@ export const signup:RequestHandler = async (req, res) => {
         return;
     }
 
-    const newUser = await createUser(data.data);
+    const newUser = await createSocio(data.data);
     if(!newUser){
         res.json( {error: "Erro ao criar utilizador"} );
         return;

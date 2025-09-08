@@ -52,9 +52,9 @@ model Socio {
   updatedAt DateTime @updatedAt
   avatar String @default("public/images/avatares/default.jpeg")
   kitSocio Boolean @default(false)
-  kitDate DateTime?
+  kitDate DateTime @updatedAt
   grupoWhatsApp Boolean @default(false)
-  grupoWhatsAppDate DateTime?
+  grupoWhatsAppDate DateTime @updatedAt
   status StatusSocio @default(ATIVO)
 
   motas Mota[]
