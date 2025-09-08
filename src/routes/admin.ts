@@ -5,7 +5,4 @@ import * as adminController from '../controllers/admin';
 export const adminRoutes = Router();
 
 adminRoutes.post('/socio', adminController.createNewSocio);
-//adminRoutes.get("/posts", adminController.getPosts);
-//adminRoutes.get("/posts/:slug", adminController.getPost);
-//adminRoutes.put("/posts/:slug", adminController.editPost);
-//adminRoutes.delete("/posts/:slug", adminController.removePosts);
+adminRoutes.get("/socios", adminController.getAllSocios);

@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { createSocio } from "../services/socio";
+import { createSocio, getSocios } from "../services/socio";
 import { z } from "zod";
 
 export const addPost:RequestHandler = async (req, res) => {
@@ -43,7 +43,6 @@ export const createNewSocio: RequestHandler = async (req, res) => {
     try {
         const result = await createSocio(data.data);
         if (result) {
-            // Remover dados sensíveis antes de enviar para o frontend
             const { password, ...safeResult } = result;
             return res.status(201).json({
                 message: "Sócio criado com sucesso",
@@ -57,10 +56,10 @@ export const createNewSocio: RequestHandler = async (req, res) => {
     }
 };
 
-export const getPosts: RequestHandler = async (req, res) => {};
-
-export const getPost: RequestHandler = async (req, res) => {};
-
-export const editPost: RequestHandler = async (req, res) => {};
-
-export const removePosts: RequestHandler = async (req, res) => {};
+export const getAllSocios: RequestHandler = async (req, res) => {
+    const socios = await getSocios();
+    if(socios) {
+        return res.status(200).json(socios);
+    }
+    return res.status(404).json({ message: "Nenhum sócio encontrado" });
+};

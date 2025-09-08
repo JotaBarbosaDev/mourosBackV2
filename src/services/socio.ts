@@ -111,4 +111,6 @@ export const createSocio = async ({ nomeCompleto, sexo, email, password, telemov
     });
 };
 
-
+export const getSocios = async () => {
+    return await prisma.socio.findMany();
+};
