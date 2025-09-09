@@ -1,7 +1,6 @@
 import bcrypt from 'bcryptjs';
 import {prisma} from '../libs/prisma'
 import { DescriptionReserva, Sexo, StatusSocio, TipoSangue } from '@prisma/client';
-import { no } from 'zod/locales';
 
 type CreateSocioProps = {
     nomeCompleto: string,
