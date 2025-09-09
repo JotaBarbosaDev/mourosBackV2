@@ -31,6 +31,15 @@ enum StatusSocio {
   HONORARIO
 }
 
+enum DescriptionReserva {
+  OLD_PARTNER
+  NO_PAY
+  EXPELLED
+  EVENT
+  HONOR
+  CUSTOM
+}
+
 model Socio {
   id Int @id @default(autoincrement())
   nSocio Int @unique
@@ -47,14 +56,14 @@ model Socio {
   concelho String
   distrito String
   dataEntrada DateTime @default(now())
-  dataNascimento DateTime
+  dataNascimento DateTime?
   responsavel String
   updatedAt DateTime @updatedAt
   avatar String @default("public/images/avatares/default.jpeg")
   kitSocio Boolean @default(false)
-  kitDate DateTime @updatedAt
+  kitDate DateTime?
   grupoWhatsApp Boolean @default(false)
-  grupoWhatsAppDate DateTime @updatedAt
+  grupoWhatsAppDate DateTime?
   status StatusSocio @default(ATIVO)
 
   motas Mota[]
@@ -86,3 +95,12 @@ model Quota{
 
   socio Socio @relation(fields: [id], references: [id])
 }
+
+model Reserva {
+  id Int @id @default(autoincrement())
+  nSocio Int @unique
+  descricao DescriptionReserva
+  note String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  }
