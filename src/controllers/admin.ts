@@ -10,12 +10,14 @@ import {
   deleteSocio,
   deleteReservaByNum
 } from "../services/admin";
-import { z } from "zod";
+import { z } from "Zod";
 import { DescriptionReserva } from "@prisma/client";
+import { createToken } from "../services/auth";
 
 export const createNewSocio: RequestHandler = async (req, res) => {
     const schema = z.object({
         nomeCompleto: z.string(),
+        role: z.enum(["ADMIN", "PRESIDENT", "TREASURER", "SECRETARY", "BOARD_MEMBER", "PARTNER", "VISITOR"]),
         sexo: z.enum(["MASCULINO", "FEMININO", "OUTRO"]),
         email: z.string().email(),
         password: z.string().min(6),
@@ -39,11 +41,12 @@ export const createNewSocio: RequestHandler = async (req, res) => {
         kitDate: z.string().transform(str => new Date(str)).optional(),
         grupoWhatsApp: z.boolean().optional(),
         grupoWhatsAppDate: z.string().transform(str => new Date(str)).optional(),
-        status: z.enum(["ATIVO", "INATIVO", "SUSPENSO", "HONORARIO"]).optional(),
+        status: z.enum(["ATIVO", "INATIVO", "SUSPENSO", "HONORARIO"]),
         numeroSocio: z.number().optional()
     });
 
     const data = schema.safeParse(req.body);
+    
     if (!data.success) {
         return res.status(400).json({ error: data.error });
     }
@@ -56,9 +59,11 @@ export const createNewSocio: RequestHandler = async (req, res) => {
         }
         
         if (result) {
+            const token = createToken(result);
             return res.status(201).json({
                 message: "Sócio criado com sucesso",
-                socio: result
+                socio: result,
+                token
             });
         }
         
@@ -148,13 +153,26 @@ export const getReservaByNumber: RequestHandler = async (req, res) => {
 }
 
 export const deleteSocioByNumber: RequestHandler = async (req, res) => {
-    const { nSocio, descricao } = req.body;
-    const socio = await getSocioByNumero(Number(nSocio));
-    if (!socio) {
-        return res.status(404).json({ message: `Nenhum sócio encontrado com o numero ${nSocio}.` });
+
+    const schema = z.object({
+        nSocio: z.number().max(9999),
+        descricao: z.enum([DescriptionReserva.OLD_PARTNER, DescriptionReserva.NO_PAY, DescriptionReserva.EXPELLED, DescriptionReserva.EVENT, DescriptionReserva.HONOR, DescriptionReserva.CUSTOM])
+    });
+
+    const data = schema.parse(req.body);
+
+    if(!data) {
+        console.log("Invalid data:", data);
+        return res.status(400).json({ error: "Dados inválidos"});
     }
-    await deleteSocio(Number(nSocio), descricao as DescriptionReserva);
-    return res.status(200).json({ message: `Sócio com o número ${nSocio} foi deletado com sucesso.` });
+
+    const { nSocio, descricao } = data;
+    const socio = await getSocioByNumero(data.nSocio);
+    if (!socio) {
+        return res.status(404).json({ message: `Nenhum sócio encontrado com o numero ${data.nSocio}.` });
+    }
+    await deleteSocio(Number(data.nSocio), data.descricao);
+    return res.status(200).json({ message: `Sócio com o número ${data.nSocio} foi deletado com sucesso.` });
 };
 
 export const deleteReservaByNumber: RequestHandler = async (req, res) => {

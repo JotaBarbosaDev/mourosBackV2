@@ -1,8 +1,9 @@
 import bcrypt from 'bcryptjs';
 import {prisma} from '../libs/prisma'
-import { DescriptionReserva, Sexo, StatusSocio, TipoSangue } from '@prisma/client';
+import { DescriptionReserva, Sexo, StatusSocio, TipoSangue, Role } from '@prisma/client';
 
 type CreateSocioProps = {
+    role: Role,
     nomeCompleto: string,
     sexo: Sexo
     email: string
@@ -22,7 +23,7 @@ type CreateSocioProps = {
     kitDate?: Date
     grupoWhatsApp?: boolean
     grupoWhatsAppDate?: Date
-    status?: StatusSocio
+    status: StatusSocio
     numeroSocio?: number
 }
 
@@ -53,7 +54,7 @@ export const getSocioByNumero = async (nSocio: number) => {
     return socio;
 }
 
-export const createSocio = async ({ nomeCompleto, sexo, email, password, telemovel, tipoSangue, rua, nPorta, codigoPostal, freguesia, concelho, distrito, dataNascimento, responsavel, avatar, kitSocio, kitDate, grupoWhatsApp, grupoWhatsAppDate, status, numeroSocio }:CreateSocioProps) => {
+export const createSocio = async ({ nomeCompleto, role, sexo, email, password, telemovel, tipoSangue, rua, nPorta, codigoPostal, freguesia, concelho, distrito, dataNascimento, responsavel, avatar, kitSocio, kitDate, grupoWhatsApp, grupoWhatsAppDate, status, numeroSocio }:CreateSocioProps) => {
   const reservado = await getReservasArr();
   let nSocio: number;
   
@@ -79,6 +80,7 @@ export const createSocio = async ({ nomeCompleto, sexo, email, password, telemov
     return await prisma.socio.create({
         data: {
             nSocio, 
+            role: role || Role.PARTNER,
             nomeCompleto, 
             sexo, 
             email, 
@@ -151,7 +153,7 @@ export const deleteSocio = async (nSocio: number, descricao: DescriptionReserva)
         await prisma.socio.delete({
             where: { nSocio: Number(nSocio) }
         });
-        const reserve = await createReserva(Number(nSocio), descricao || DescriptionReserva.OLD_PARTNER);
+        const reserve = await createReserva(Number(nSocio), descricao as DescriptionReserva || DescriptionReserva.OLD_PARTNER);
 
         if (reserve && 'error' in reserve) {
             console.error("Error creating reserva after deleting socio:", reserve.error);

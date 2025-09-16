@@ -14,7 +14,7 @@ server.use(express.static('public'));
 
 server.use("/api/auth", authRoutes);
 server.use("/api/admin", adminRoutes);
-server.use("/api", mainRoutes);
+server.use("/api/main", mainRoutes);
 
 server.listen(4444, () => {
     console.log('🚀 Server listening in http://localhost:4444')

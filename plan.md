@@ -114,6 +114,7 @@ SOCIO
   - ❌ Permite filtrar por status (ATIVO, INATIVO, SUSPENSO, HONORARIO)
   - ⚠️ Falta paginação
 [✅] Pegar Sócio pelo numero de sócio
+[✅] Têm Role
 
 
 
@@ -121,7 +122,7 @@ TO DO
 - Organizar funções nos services
 - Organizar requisições no Postman
 - Criar autenticação com rules
-- Adicionar rules ao socio
+- Criar schemas das REQs em todos os controllers
 
 MOTA
 [❌] Criar Mota

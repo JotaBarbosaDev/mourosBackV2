@@ -40,13 +40,24 @@ enum DescriptionReserva {
   CUSTOM
 }
 
+enum Role {
+  ADMIN
+  PRESIDENT
+  TREASURER
+  SECRETARY
+  BOARD_MEMBER
+  PARTNER
+  VISITOR
+}
+
 model Socio {
   id Int @id @default(autoincrement())
+  role Role @default(PARTNER)
   nSocio Int @unique
   nomeCompleto String
   sexo Sexo 
   email String @unique
-  password String
+  password String @default("")
   telemovel String
   tipoSangue TipoSangue @default(ND)
   rua String
