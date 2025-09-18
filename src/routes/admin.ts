@@ -8,12 +8,11 @@ adminRoutes.post('/socio', adminController.createNewSocio);
 adminRoutes.get("/socios", adminController.getAllSocios);
 adminRoutes.get("/socio/:nSocio", adminController.getSocioByNum);
 adminRoutes.delete("/socio/:nSocio", adminController.deleteSocioByNumber);
+adminRoutes.post("/moto", adminController.createNewMoto);
+adminRoutes.get("/motas", adminController.getAllMotos);
+adminRoutes.get("/mota/:nSocio", adminController.getMotoByNum);
 adminRoutes.post("/reserva",  adminController.createNewReserva);
 adminRoutes.get("/reservas", adminController.getAllReservas);
 adminRoutes.get("/reserva/:nSocio", adminController.getReservaByNumber);
 adminRoutes.get("/reservasArr", adminController.getAllReservasArray);
 adminRoutes.delete("/reserva/:nSocio", adminController.deleteReservaByNumber);
-
-
-
-

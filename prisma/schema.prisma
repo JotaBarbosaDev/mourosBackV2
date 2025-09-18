@@ -24,6 +24,17 @@ enum TipoSangue {
   O_NEGATIVO
 }
 
+enum CategoriaMota {
+  ND
+  SCOOTER
+  NAKED
+  CUSTOM
+  SPORT
+  TOURING
+  TRAIL
+  OFF_ROAD
+}
+
 enum StatusSocio {
   ATIVO
   INATIVO
@@ -85,10 +96,11 @@ model Mota {
   id Int @id @default(autoincrement())
   marca String
   modelo String
-  celindrada Int
-  matricula String @unique
-  ano DateTime
-  avatar String
+  cilindrada Int
+  matricula String? @unique
+  ano Int?
+  categoria CategoriaMota?
+  avatar String? @default("public/images/motas/defaultMoto.jpg")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   

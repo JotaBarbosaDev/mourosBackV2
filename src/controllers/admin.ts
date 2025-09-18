@@ -8,11 +8,14 @@ import {
   getReservas,
   getReservasArr,
   deleteSocio,
-  deleteReservaByNum
+  deleteReservaByNum,
+  createMoto,
+  getMotos,
+  getMotoByNumb
 } from "../services/admin";
+import {createToken} from "../services/auth";
 import { z } from "Zod";
 import { DescriptionReserva } from "@prisma/client";
-import { createToken } from "../services/auth";
 
 export const createNewSocio: RequestHandler = async (req, res) => {
     const schema = z.object({
@@ -111,7 +114,11 @@ export const createNewReserva: RequestHandler = async (req, res) => {
     }
 
     try {
-        const result = await createReserva(data.data.nSocio, data.data.descricao || DescriptionReserva.CUSTOM, data.data.note);
+        const result = await createReserva({
+            nSocio: data.data.nSocio, 
+            descricao: data.data.descricao || DescriptionReserva.CUSTOM, 
+            note: data.data.note
+        });
         
         if (result && 'error' in result) {
             return res.status(500).json(result);
@@ -184,3 +191,54 @@ export const deleteReservaByNumber: RequestHandler = async (req, res) => {
     await deleteReservaByNum(Number(nSocio));
     return res.status(200).json({ message: `Reserva com o número ${nSocio} foi deletada com sucesso.` });
 };
+
+export const createNewMoto: RequestHandler = async (req, res) => {
+    const schema = z.object({
+        nSocio: z.number().min(1),
+        marca: z.string(),
+        modelo: z.string(),
+        cilindrada: z.number().min(50).max(2500),
+        matricula: z.string().min(4).max(10).optional(),
+        ano: z.number().min(1900).max(new Date().getFullYear()).optional(),
+        avatar: z.string().optional(),
+        categoria: z.enum(["ND", "SCOOTER", "NAKED", "CUSTOM", "SPORT", "TOURING", "TRAIL", "OFF_ROAD"]).optional()
+    });
+
+    const data = schema.safeParse(req.body);
+    
+    if (!data.success) {
+        return res.status(400).json({ error: data.error });
+    }       
+
+    const result = await createMoto(data.data);
+    
+    if (result && 'error' in result) {
+        return res.status(400).json(result);
+    }
+    
+    if (result) {
+        return res.status(201).json({
+            message: "Mota criada com sucesso",
+            moto: result
+        });
+    }
+    
+    return res.status(400).json({ error: "Erro ao criar mota" });
+};
+
+export const getAllMotos: RequestHandler = async (req, res) => {
+    const motos = await getMotos();
+    if(motos) {
+        return res.status(200).json(motos);
+    }
+    return res.status(404).json({ message: "Nenhuma mota encontrada." });
+}
+
+export const getMotoByNum: RequestHandler = async (req, res) => {
+    const { nSocio } = req.params;
+    const moto = await getMotoByNumb(Number(nSocio));
+    if (moto) {
+        return res.status(200).json(moto);
+    }
+    return res.status(404).json({ message: `Nenhuma mota encontrada para o sócio com o numero ${nSocio}.` });
+}

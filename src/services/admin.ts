@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import {prisma} from '../libs/prisma'
-import { DescriptionReserva, Sexo, StatusSocio, TipoSangue, Role } from '@prisma/client';
+import { DescriptionReserva, Sexo, StatusSocio, TipoSangue, Role, Socio } from '@prisma/client';
 
 type CreateSocioProps = {
     role: Role,
@@ -26,6 +26,24 @@ type CreateSocioProps = {
     status: StatusSocio
     numeroSocio?: number
 }
+
+type ReservaProps = {
+    nSocio: number,
+    descricao: DescriptionReserva,
+    note?: string
+}
+
+type CreateMotoProps = {
+    nSocio: number,
+    marca: string,
+    modelo: string,
+    cilindrada: number,
+    matricula?: string,
+    ano?: number,
+    avatar?: string,
+    categoria?: string
+}
+
 
 export const nextNumberSocio = async () => {
   const reservado = await getReservasArr();
@@ -105,7 +123,7 @@ export const createSocio = async ({ nomeCompleto, role, sexo, email, password, t
     });
 };
 
-export const createReserva = async (nSocio: number, descricao: DescriptionReserva, note?: string) => {
+export const createReserva = async ({nSocio, descricao, note}: ReservaProps) => {
   const reserva = await getReservaByNum(nSocio);
   if(reserva){
     return { error: "Número de sócio já tem uma reserva" };
@@ -153,7 +171,10 @@ export const deleteSocio = async (nSocio: number, descricao: DescriptionReserva)
         await prisma.socio.delete({
             where: { nSocio: Number(nSocio) }
         });
-        const reserve = await createReserva(Number(nSocio), descricao as DescriptionReserva || DescriptionReserva.OLD_PARTNER);
+        const reserve = await createReserva({
+            nSocio: Number(nSocio), 
+            descricao: descricao as DescriptionReserva || DescriptionReserva.OLD_PARTNER
+        });
 
         if (reserve && 'error' in reserve) {
             console.error("Error creating reserva after deleting socio:", reserve.error);
@@ -177,3 +198,46 @@ export const deleteReservaByNum = async (nSocio: number) => {
         return { error: "Erro interno do servidor" };
     }
 };
+
+export const createMoto = async ({nSocio, marca, modelo, cilindrada, matricula, ano, avatar, categoria}: CreateMotoProps) => {
+    try {
+        const data: any = {
+            marca,
+            modelo,
+            cilindrada: cilindrada, 
+            socios: {
+              connect: { nSocio: nSocio }
+            },
+            matricula,
+            ano,
+            avatar,
+            categoria
+        };
+
+        if (matricula) data.matricula = matricula;
+        if (ano) data.ano = ano;
+        if (avatar) data.avatar = avatar;
+        if (categoria) data.categoria = categoria;
+
+        const result = await prisma.mota.create({
+          data,
+        });
+        return result;
+    } catch (error) {
+        console.error("Erro ao criar mota:", error);
+        return { error: "Erro ao criar mota" };
+    }
+};
+
+export const getMotos = async () => {
+    const result = await prisma.mota.findMany();
+    return result;
+};
+
+export const getMotoByNumb = async (nSocio: number) => {
+    const socio = await prisma.socio.findUnique({
+        where: { nSocio: nSocio },
+        include: { motas: true }
+    });
+    return socio?.motas || null;
+}
