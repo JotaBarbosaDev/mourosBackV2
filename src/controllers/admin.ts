@@ -11,11 +11,15 @@ import {
   deleteReservaByNum,
   createMoto,
   getMotos,
-  getMotoByNumb
+  getMotoByNumb,
+  deleteMotoID,
+  getMotoID,
+  getSocioByMoto
 } from "../services/admin";
 import {createToken} from "../services/auth";
 import { z } from "Zod";
 import { DescriptionReserva } from "@prisma/client";
+import { prisma } from "../libs/prisma";
 
 export const createNewSocio: RequestHandler = async (req, res) => {
     const schema = z.object({
@@ -157,7 +161,60 @@ export const getReservaByNumber: RequestHandler = async (req, res) => {
         return res.status(200).json(reserva);
     }
     return res.status(404).json({ message: `Nenhuma reserva encontrada com o numero ${nSocio}.` });
-}
+};
+
+/*
+export const addPartnerToMoto: RequestHandler = async (req, res) => {
+    const schema = z.object({
+        nSocio: z.number().min(1),
+        idMoto: z.number().min(1)
+    });
+
+    const data = schema.safeParse(req.params);
+    
+    if (!data.success) {
+        return res.status(400).json({ error: data.error });
+    }
+
+    const socio = await getSocioByNumero(data.data.nSocio);
+    if (!socio) {
+        return res.status(404).json({ message: `Nenhum sócio encontrado com o numero ${data.data.nSocio}.` });
+    }
+
+    const moto = await getMotoID(data.data.idMoto);
+    if (!moto) {
+        return res.status(404).json({ message: `Nenhuma mota encontrada com o id ${data.data.idMoto}.` });
+    }
+
+    const motoSocios = await prisma.mota.findUnique({
+        where: { id: data.data.idMoto },
+        include: { socios: true }
+    });
+
+    if (!motoSocios) {
+        return res.status(404).json({ message: `Nenhuma mota encontrada com o id ${data.data.idMoto}.` });
+    }
+
+    if (motoSocios.socios.some(s => s.nSocio === data.data.nSocio)) {
+        return res.status(400).json({ message: `O sócio com o número ${data.data.nSocio} já está associado à mota com o id ${data.data.idMoto}.` });
+    }
+
+    try {
+        await prisma.mota.update({
+            where: { id: data.data.idMoto },
+            data: {
+                socios: {
+                    connect: { nSocio: data.data.nSocio }
+                }
+            }
+        });
+        return res.status(200).json({ message: `Sócio com o número ${data.data.nSocio} adicionado à mota com o id ${data.data.idMoto} com sucesso.` });
+    } catch (error) {
+        console.error("Error adding partner to moto:", error);
+        return res.status(500).json({ error: "Erro interno do servidor" });
+    }
+};
+*/
 
 export const deleteSocioByNumber: RequestHandler = async (req, res) => {
 
@@ -241,4 +298,39 @@ export const getMotoByNum: RequestHandler = async (req, res) => {
         return res.status(200).json(moto);
     }
     return res.status(404).json({ message: `Nenhuma mota encontrada para o sócio com o numero ${nSocio}.` });
+}
+
+export const getMotoById: RequestHandler = async(req,res) => {
+    const { id } = req.params;
+    const moto = await getMotoID(Number(id));
+    if (moto) {
+        return res.status(200).json(moto);
+    }
+    return res.status(404).json({ message: `Nenhuma mota encontrada com o id ${id}.` });
+}
+
+export const deleteMotoById: RequestHandler = async (req, res) => {
+    const { id } = req.params;
+    const moto = await getMotoID(Number(id));
+    if (!moto) {
+        return res.status(404).json({ message: `Nenhuma mota encontrada com o id ${id}.` });
+    }
+    await deleteMotoID(Number(id));
+    return res.status(200).json({ message: `Mota com o id ${id} foi deletada com sucesso.` });
+};
+
+export const getSocioByMotoId: RequestHandler = async (req, res) => {
+    const { id } = req.params;
+
+    const socio = await getSocioByMoto(id);
+    if (!socio) {
+        return res.status(404).json({ 
+            message: `Nenhum sócio encontrado para a mota com o id ${id}.`,
+            socio: null 
+        });
+    }
+    return res.status(200).json({
+        message: "Sócio encontrado com sucesso.",
+        socio
+    });
 }

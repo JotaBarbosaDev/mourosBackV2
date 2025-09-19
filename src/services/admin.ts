@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import {prisma} from '../libs/prisma'
 import { DescriptionReserva, Sexo, StatusSocio, TipoSangue, Role, Socio } from '@prisma/client';
+import { deleteMotoById } from '../controllers/admin';
 
 type CreateSocioProps = {
     role: Role,
@@ -167,6 +168,18 @@ export const getReservaByNum = async (nSocio: number) => {
 };
 
 export const deleteSocio = async (nSocio: number, descricao: DescriptionReserva) => {
+    const motos = await getMotoByNumb(nSocio);
+    if(motos && motos.length > 0) {
+        for(const moto of motos) {
+            const linkedSocios = await prisma.mota.findUnique({
+                where: { id: moto.id },
+                include: { socios: true }
+            });
+            if(linkedSocios && linkedSocios.socios.length <= 1) {
+                await deleteMotoID(moto.id);
+            }
+        }
+    }
   try {
         await prisma.socio.delete({
             where: { nSocio: Number(nSocio) }
@@ -241,3 +254,31 @@ export const getMotoByNumb = async (nSocio: number) => {
     });
     return socio?.motas || null;
 }
+
+export const getMotoID = async (id: number) => {
+    const moto = await prisma.mota.findUnique({
+        where: { id: id }
+    });
+    return moto || null;
+}
+
+export const deleteMotoID = async (id: number) => {
+    try {
+        await prisma.mota.delete({
+            where: { id: Number(id) }
+        });
+        return { message: `Mota com o id ${id} foi deletada com sucesso.` };
+    } catch (error) {
+        console.error("Error deleting mota:", error);
+        return { error: "Erro interno do servidor" };
+    }
+};
+
+export const getSocioByMoto = async (id: string) => {
+    const socio = await prisma.mota.findUnique({
+        where: { id: Number(id) },
+        include: { socios: true }
+    });
+    return socio?.socios || null;
+};
+
