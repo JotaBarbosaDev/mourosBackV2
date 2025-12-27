@@ -255,3 +255,45 @@ EXEMPLOS DE REQUISIÇÕES E RESPOSTAS para a API acima
 {
     error: null
 }
+
+
+
+-----------Casos de uso-----------
+
+-Sócio
+
+
+Direção
+  ADMIN
+    --- SÓCIO ---
+    GET Ver Todos Sócios
+    GET Ver Sócio por Numero de Sócio
+    PUT Editar Sócio
+    DELETE Apagar Sócio
+
+    --- MOTA ---
+    GET Ver Todas as Mota
+    GET Ver Mota por ID
+    GET Ver Motas de Sócio por Numero de Sócio
+    GET Ver Soócios de Mota por ID da Mota
+    PUT Editar Motas
+    DELETE Apagar Motas
+
+    --- EVENTO ---
+    GET Todos os Eventos
+    PUT Editar Eventos
+    DELETE Apagar Cursos
+
+  Presidente
+  Secretário
+  Tesoureiro
+  Outro
+
+Convidado
+  Acesso à Landing Page
+    Ver Motas
+    Ver Eventos
+      Inscrever nos eventos
+    Ver Bar
+      Pedir coisas no bar
+

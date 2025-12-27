@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Sexo {
@@ -12,6 +11,7 @@ enum Sexo {
   FEMININO
   OUTRO
 }
+
 enum TipoSangue {
   ND
   A_POSITIVO
@@ -61,69 +61,291 @@ enum Role {
   VISITOR
 }
 
-model Socio {
-  id Int @id @default(autoincrement())
-  role Role @default(PARTNER)
-  nSocio Int @unique
-  nomeCompleto String
-  sexo Sexo 
-  email String @unique
-  password String @default("")
-  telemovel String
-  tipoSangue TipoSangue @default(ND)
-  rua String
-  nPorta String
-  codigoPostal String
-  freguesia String
-  concelho String
-  distrito String
-  dataEntrada DateTime @default(now())
-  dataNascimento DateTime?
-  responsavel String
-  updatedAt DateTime @updatedAt
-  avatar String @default("public/images/avatares/default.jpeg")
-  kitSocio Boolean @default(false)
-  kitDate DateTime?
-  grupoWhatsApp Boolean @default(false)
-  grupoWhatsAppDate DateTime?
-  status StatusSocio @default(ATIVO)
+enum eventStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
 
-  motas Mota[]
-  quotas Quota[]
+enum AudienceType {
+  SOCIO
+  NAO_SOCIO
+  CRIANCA
+}
+
+enum PriceTiming {
+  EARLY
+  LATE
+  ONSITE
+}
+
+enum TipoParagem {
+  START
+  BREAK
+  COFFEE
+  LUNCH
+  DINNER
+  SNACK
+  REFUEL
+  END
+}
+
+enum InscricaoStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  CHECKED_IN
+  NO_SHOW
+}
+
+enum PagamentoStatus {
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}
+
+enum PagamentoMetodo {
+  CASH
+  MBWAY
+  TRANSFER
+  CARD
+  OTHER
+}
+
+model Socio {
+  id                Int         @id @default(autoincrement())
+  role              Role        @default(PARTNER)
+  nSocio            Int         @unique
+  nomeCompleto      String
+  sexo              Sexo
+  email             String      @unique
+  password          String      @default("")
+  telemovel         String
+  tipoSangue        TipoSangue  @default(ND)
+  rua               String
+  nPorta            String
+  codigoPostal      String
+  freguesia         String
+  concelho          String
+  distrito          String
+  dataEntrada       DateTime    @default(now())
+  dataNascimento    DateTime?
+  responsavel       String
+  updatedAt         DateTime    @updatedAt
+  avatar            String      @default("public/images/avatares/default.jpeg")
+  kitSocio          Boolean     @default(false)
+  kitDate           DateTime?
+  grupoWhatsApp     Boolean     @default(false)
+  grupoWhatsAppDate DateTime?
+  status            StatusSocio @default(ATIVO)
+
+  motas      Mota[]
+  quotas     Quota[]
+  inscricoes Inscricao[]
 }
 
 model Mota {
-  id Int @id @default(autoincrement())
-  marca String
-  modelo String
+  id         Int            @id @default(autoincrement())
+  marca      String
+  modelo     String
   cilindrada Int
-  matricula String? @unique
-  ano Int?
-  categoria CategoriaMota?
-  avatar String? @default("public/images/motas/defaultMoto.jpg")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  socios Socio[]
+  matricula  String?        @unique
+  ano        Int?
+  categoria  CategoriaMota?
+  avatar     String?        @default("public/images/motas/defaultMoto.jpg")
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  socios     Socio[]
+  inscricoes Inscricao[]
 }
 
-model Quota{
-  id Int @id @default(autoincrement())
-  nSocio Int
-  ano Int
-  data DateTime @default(now())
-  valor Int 
-  payedAt DateTime @default(now())
+model Quota {
+  id        Int      @id @default(autoincrement())
+  nSocio    Int
+  ano       Int
+  data      DateTime @default(now())
+  valor     Decimal  @db.Decimal(10, 2)
+  payedAt   DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   socio Socio @relation(fields: [id], references: [id])
+
+  @@unique([nSocio, ano])
+  @@index([nSocio])
 }
 
 model Reserva {
-  id Int @id @default(autoincrement())
-  nSocio Int @unique
+  id        Int                @id @default(autoincrement())
+  nSocio    Int                @unique
   descricao DescriptionReserva
-  note String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  }
+  note      String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
+model Evento {
+  id                    Int                    @id @default(autoincrement())
+  title                 String
+  eventType             String
+  eventSubtype          String
+  eventStatus           eventStatus            @default(SCHEDULED)
+  description           String?
+  registrationDateStart DateTime
+  registrationDateEnd   DateTime
+  dateStart             DateTime
+  dateEnd               DateTime
+  locationStart         String
+  locationStops         String[]               @default([])
+  locationEnd           String
+  moeda                 String                 @default("EUR")
+  priceSocio            Decimal?               @db.Decimal(10, 2)
+  priceNaoSocio         Decimal?               @db.Decimal(10, 2)
+  paragens              Paragem[]
+  estilos               EventoEstilo[]
+  inscricoes            Inscricao[]
+  priceTiers            EventPriceTier[]
+  regrasPorCategoria    EventoRegraCategoria[]
+  minCilindrada         Int?
+  maxCilindrada         Int?
+  categoriasPermitidas  CategoriaMota[]        @default([]) // ex. [OFF_ROAD, TRAIL]
+  categoriasProibidas   CategoriaMota[]        @default([]) // ex. [STREET]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+}
+
+model Paragem {
+  id              Int         @id @default(autoincrement())
+  eventoId        Int
+  ordem           Int
+  tipo            TipoParagem
+  nome            String?
+  descricao       String?
+  enderecoLinha1  String?
+  enderecoLinha2  String?
+  localidade      String?
+  distrito        String?
+  codigoPostal    String?
+  pais            String?     @default("Portugal")
+  latitude        Decimal?    @db.Decimal(9, 6)
+  longitude       Decimal?    @db.Decimal(9, 6)
+  placeId         String?
+  chegadaPlaneada DateTime?
+  pausaMinutos    Int?
+  saidaPlaneada   DateTime?
+  distanciaKmPrev Decimal?    @db.Decimal(6, 2)
+  duracaoMinPrev  Int?
+
+  recursos ParagemRecurso[]
+  evento   Evento           @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+
+  @@unique([eventoId, ordem])
+  @@index([eventoId])
+}
+
+model Recurso {
+  id     Int     @id @default(autoincrement())
+  codigo String  @unique // COMIDA, BEBIDA, GASOLINA, POWERBANK, WC, EV_CHARGING, ...
+  nome   String
+  ativo  Boolean @default(true)
+
+  paragens ParagemRecurso[]
+}
+
+model ParagemRecurso {
+  paragemId  Int
+  recursoId  Int
+  disponivel Boolean  @default(true)
+  quantidade Int?
+  custo      Decimal? @db.Decimal(10, 2)
+  nota       String?
+
+  paragem Paragem @relation(fields: [paragemId], references: [id], onDelete: Cascade)
+  recurso Recurso @relation(fields: [recursoId], references: [id], onDelete: Restrict)
+
+  @@id([paragemId, recursoId])
+  @@index([recursoId])
+}
+
+model Estilo {
+  id     Int     @id @default(autoincrement())
+  codigo String  @unique // OFF_ROAD, STREET, LONG_TRIP, N2, FATIMA, ADVENTURE, ...
+  nome   String
+  ativo  Boolean @default(true)
+
+  eventos EventoEstilo[]
+}
+
+model EventoEstilo {
+  eventoId Int
+  estiloId Int
+  evento   Evento @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  estilo   Estilo @relation(fields: [estiloId], references: [id], onDelete: Restrict)
+
+  @@id([eventoId, estiloId])
+  @@index([estiloId])
+}
+
+model EventPriceTier {
+  id        Int          @id @default(autoincrement())
+  eventoId  Int
+  audience  AudienceType
+  timing    PriceTiming
+  valor     Decimal      @db.Decimal(10, 2)
+  validFrom DateTime?
+  validTo   DateTime?
+  nota      String?
+
+  evento Evento @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+
+  @@unique([eventoId, audience, timing])
+  @@index([eventoId, audience, timing])
+}
+
+model Inscricao {
+  id              Int              @id @default(autoincrement())
+  eventoId        Int
+  socioId         Int
+  motoId          Int?
+  status          InscricaoStatus  @default(PENDING)
+  audience        AudienceType
+  precoAplicado   Decimal          @db.Decimal(10, 2)
+  moeda           String           @default("EUR")
+  pagamentoStatus PagamentoStatus  @default(PENDING)
+  pagamentoMetodo PagamentoMetodo?
+  pagoEm          DateTime?
+  motoMarca       String?
+  motoModelo      String?
+  motoCilindrada  Int?
+  motoMatricula   String?
+
+  observacoes String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  evento Evento @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  socio  Socio  @relation(fields: [socioId], references: [id], onDelete: Cascade)
+  moto   Mota?  @relation(fields: [motoId], references: [id], onDelete: SetNull)
+
+  @@unique([eventoId, socioId]) // 1 inscrição por sócio no evento
+  @@index([socioId])
+  @@index([eventoId])
+  @@index([motoId])
+}
+
+model EventoRegraCategoria {
+  id            Int           @id @default(autoincrement())
+  eventoId      Int
+  categoria     CategoriaMota
+  minCilindrada Int?
+  maxCilindrada Int?
+  mensagem      String?
+  ativo         Boolean       @default(true)
+
+  evento Evento @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+
+  @@unique([eventoId, categoria])
+  @@index([eventoId])
+}
